@@ -1,146 +1,186 @@
-import React, { useState } from "react";
-import { View, Text, Image, FlatList, TouchableOpacity, TextInput, KeyboardAvoidingView, Platform, RefreshControl, Dimensions } from "react-native";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import axios from "axios";
-import { SafeAreaProvider, useSafeAreaInsets } from "react-native-safe-area-context";
+import React, { useRef, useState } from "react";
+import { View, Text, FlatList, Image, TextInput, TouchableOpacity, ActivityIndicator, RefreshControl, Keyboard } from "react-native";
 import styles from "../styles/mainStyle";
 import { useMemberStore } from "../store/useMemberStore";
-
-const { width } = Dimensions.get("window");
-
-const fetchPost = async (token) => {
-  const endpoint = `https://pk9blqxffi.execute-api.us-east-1.amazonaws.com/xdeal/GetPostDetails`;
-  const inputData = { token, post_id: 211, version_number: "2.2.6", user_type: "Member" };
-  const response = await axios.post(endpoint, inputData);
-  return response.data[0];
-};
-
-const hypePost = async (postId, token) => {
-  const endpoint = `https://pk9blqxffi.execute-api.us-east-1.amazonaws.com/xdeal/HypePost`;
-  const response = await axios.post(endpoint, { token, postId });
-  return response.data;
-};
-
-const CommentItem = ({ comment }) => (
-  <View style={styles.GlassCard}>
-    {" "}
-    <View style={styles.ContainerRow}>
-      <Image source={comment.image_link ? { uri: comment.image_link } : null} style={[styles.ProfilePicturePost, { marginRight: 10 }]} />
-      <View style={{ flex: 1 }}>
-        <Text style={[styles.contentText1, styles.fontWeight700, styles.primaryColor]}>{comment.username}</Text>
-        <Text style={{ color: "#B68B4B", marginTop: 2 }}>{comment.comment}</Text>{" "}
-      </View>{" "}
-    </View>{" "}
-  </View>
-);
+import { usePost, useComments, useAddComment, useHypePost } from "../hooks/usePost";
+import { debounce } from "lodash"; // or implement your own debounce
 
 export default function ViewPostScreen() {
   const { memberData, setMemberData } = useMemberStore();
-  const insets = useSafeAreaInsets();
-  const queryClient = useQueryClient();
+  const flatListRef = useRef(null);
   const [newComment, setNewComment] = useState("");
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const lastActionRef = useRef(null);
+
+
+  const { data: post, isLoading: isPostLoading, refetchPost } = usePost(memberData);
+  const { hypeMutation, unhypeMutation } = useHypePost(post?.post_id, memberData, "tutywan");
 
   const {
-    data: post,
-    isLoading,
-    error,
-    refetch,
-    isFetching,
-  } = useQuery({
-    queryKey: ["post"],
-    queryFn: () => fetchPost(memberData.token),
-    enabled: !!memberData,
-    staleTime: 1000 * 60,
-    cacheTime: 1000 * 60 * 5,
-  });
+    data: commentsPages,
+    fetchNextPage,
+    hasNextPage,
+    refetch: refetchComments,
+    isFetchingNextPage,
+    isRefetching,
+  } = useComments(post?.post_id, memberData);
+  const addCommentMutation = useAddComment(post?.post_id, memberData);
 
-  const handleHype = async () => {
-    if (!post) return;
-    try {
-      await hypePost(post.post_id, memberData.token);
-      queryClient.invalidateQueries(["post"]);
-    } catch (err) {
-      console.log("Hype error:", err);
-    }
-  };
+  const comments = commentsPages?.pages?.flatMap((p) => p.comments) || [];
 
-  const handleAddComment = async () => {
+  const handleAddComment = () => {
     if (!newComment.trim()) return;
-    console.log("Submit comment:", newComment);
+    addCommentMutation.mutate({
+      token: memberData,
+      comment: newComment.trim(),
+      username: "tutywan",
+      post_id: post.post_id,
+    });
     setNewComment("");
-    queryClient.invalidateQueries(["post"]);
+    Keyboard.dismiss();
+    setTimeout(() => flatListRef.current?.scrollToEnd({ animated: true }), 300);
   };
 
-  if (!memberData) {
+  const handleRefreshComments = async () => {
+    setIsRefreshing(true);
+    await refetchComments();
+    setIsRefreshing(false);
+  };
+
+  const loadMore = () => {
+    if (hasNextPage && !isFetchingNextPage) fetchNextPage();
+  };
+
+  const triggerHypeChange = debounce(() => {
+  if (!post) return;
+
+  const alreadyHyped = post.hyped_by?.some(h => h.hyped_by_username === "tutywan");
+
+  if (lastActionRef.current === "hype" && !alreadyHyped) {
+    hypeMutation.mutate({ post_id: post.post_id, token: memberData, username: "tutywan" });
+  } else if (lastActionRef.current === "unhype" && alreadyHyped) {
+    unhypeMutation.mutate({ post, post_id: post.post_id, token: memberData, username: "tutywan" });
+  }
+
+  lastActionRef.current = null; // reset after calling
+}, 500);
+
+  if (!memberData)
     return (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "#202221" }}>
-        <Text style={{ color: "#B68B4B" }}>No memberData set</Text>
-        <TouchableOpacity onPress={() => setMemberData({ token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1laWRlbnRpZmllciI6IjkiLCJuYmYiOjE3NjQzMTk5MDksImV4cCI6MTc2NjkxMTkwOSwiaXNzIjoiWHVyMzRQMSIsImF1ZCI6Ilh1cjQ0UFAifQ.zSqZ5gIsy6Yy9dmU-6GmshUNKGrXQHeqIDKw-QqcLzI" })} style={[styles.StatusButton, { marginTop: 10 }]}>
+      <View style={styles.container}>
+        {" "}
+        <Text style={styles.warningText}>No memberData set</Text>
+        <TouchableOpacity onPress={() => setMemberData("dummy-token")} style={styles.StatusButton}>
           {" "}
           <Text style={styles.StatusButtonText}>Set dummy memberData</Text>{" "}
         </TouchableOpacity>{" "}
       </View>
     );
-  }
 
-  if (isLoading) return <Text style={{ color: "#B68B4B" }}>Loading post...</Text>;
-  if (error || !post) return <Text style={{ color: "#956E2F" }}>Error loading post: {String(error?.message)}</Text>;
-
-  const renderHeader = () => (
-    <View style={{ marginBottom: 15 }}>
-      <View style={[styles.ContainerRow, { marginVertical: 12 }]}>
-        <Image source={post.image_link ? { uri: post.image_link } : null} style={styles.ProfilePicturePost} />
-        <View style={{ marginLeft: 12 }}>
-          {" "}
-          <Text style={styles.UsernameText}>{post.username}</Text>
-          {post.display_name && <Text style={{ color: "#B68B4B" }}>{post.display_name}</Text>}{" "}
-        </View>{" "}
+  if (isPostLoading)
+    return (
+      <View style={styles.centeredContainer}>
+        {" "}
+        <ActivityIndicator size="large" />{" "}
       </View>
+    );
 
-      {post.picture_1 && <Image source={{ uri: post.picture_1 }} style={styles.PostImage} resizeMode="cover" />}
+    const alreadyHyped = post.hyped_by?.some(h => h.hyped_by_username === "tutywan");
+    const hypeCount = post.number_of_hype || 0;
 
-      <View style={{ flexDirection: "row", marginBottom: 10 }}>
-        <TouchableOpacity onPress={handleHype} style={[styles.StatusButton, { marginRight: 12 }]}>
-          <Text style={styles.StatusButtonText}>{`Hype (${post.number_of_hype})`}</Text>
-        </TouchableOpacity>
-      </View>
+    // If user hasn't hyped yet, subtract 1 from count only for display purposes
+    const displayHypeCount = alreadyHyped ? hypeCount : hypeCount;
+    let hypeText = "";
 
-      {post.caption && (
-        <View style={styles.CaptionContainer}>
-          <Text style={[styles.UsernameText, { marginBottom: 4 }]}>{post.username}</Text>
-          <Text style={styles.CaptionText}>{post.caption}</Text>
-        </View>
-      )}
+    if (alreadyHyped) {
+    if (hypeCount === 1) { 
+      console.log('Hype count', post.number_of_hype)
+      hypeText = "Hyped by you";
+    } 
+    else { 
+      hypeText = `Hyped by you, ${hypeCount - 1} other${hypeCount - 1 > 1 ? "s" : ""}`;
+    }
+    } else {
+    if (hypeCount === 0) hypeText = "Be the first to hype";
+    else hypeText = `Hyped by ${hypeCount} ${hypeCount > 1 ? "people" : "person"}`;
+    }
 
-      <View style={styles.GlassCard}>
-        <TextInput
-          placeholder="Add a comment..."
-          placeholderTextColor="#956E2F"
-          value={newComment}
-          onChangeText={setNewComment}
-          style={styles.InputComment}
-          onSubmitEditing={handleAddComment}
-          returnKeyType="send"
-        />
-        <TouchableOpacity onPress={handleAddComment} style={{ marginTop: 5, alignSelf: "flex-end" }}>
-          <Text style={styles.StatusButtonText}>Post</Text>
-        </TouchableOpacity>
-      </View>
-    </View>
-  );
 
   return (
-    <SafeAreaProvider style={styles.SafeArea}>
-      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : "height"}>
+    <View style={styles.container}>
+      {/* Post Card */}{" "}
+      <View style={styles.postCard}>
+        {" "}
+        <View style={styles.header}>
+          <Image source={{ uri: post?.image_link }} style={styles.avatar} />{" "}
+          <View style={styles.userInfo}>
+            {" "}
+            <Text style={styles.name}>{post?.display_name}</Text> <Text style={styles.username}>@{post?.username}</Text>{" "}
+          </View>{" "}
+        </View>{" "}
+        <Text style={styles.caption}>{post?.caption}</Text>
+        {post?.picture_1 && <Image source={{ uri: post.picture_1 }} style={styles.postImage} />}
+        {/* Like section */}{" "}
+        <View style={styles.likeSection}>
+          <TouchableOpacity
+            onPress={() => {
+              const alreadyHyped = post.hyped_by?.some(h => h.hyped_by_username === "tutywan");
+              console.log('lastActionRef.current', lastActionRef.current)
+              lastActionRef.current = alreadyHyped ? "unhype" : "hype";
+              triggerHypeChange();
+            }}
+          >
+            <Text>{alreadyHyped ? "💛" : "🤍"} • {hypeText}</Text>
+          </TouchableOpacity>{" "}
+        </View>{" "}
+      </View>
+      {/* Comments */}
+      <View style={styles.commentsCard}>
+        <Text style={styles.commentsHeader}>Comments</Text>
         <FlatList
-          data={post.comments || []}
-          keyExtractor={(item, index) => index.toString()}
-          renderItem={({ item }) => <CommentItem comment={item} />}
-          ListHeaderComponent={renderHeader}
-          contentContainerStyle={{ paddingTop: insets.top + 10, paddingBottom: insets.bottom + 10 }}
-          refreshControl={<RefreshControl refreshing={isFetching} onRefresh={refetch} tintColor="#B68B4B" />}
-        />{" "}
-      </KeyboardAvoidingView>{" "}
-    </SafeAreaProvider>
+          ref={flatListRef}
+          data={comments}
+          keyExtractor={(item, idx) => item?.id?.toString() || `c-${idx}`}
+          onEndReached={loadMore}
+          onEndReachedThreshold={0.4}
+          refreshControl={
+            <RefreshControl refreshing={isRefetching || isRefreshing} onRefresh={handleRefreshComments} tintColor="#B68B4B" colors={["#B68B4B"]} />
+          }
+          ListFooterComponent={isFetchingNextPage ? <ActivityIndicator style={{ marginVertical: 10 }} /> : null}
+          contentContainerStyle={{ paddingBottom: 10 }}
+          renderItem={({ item }) => (
+            <View style={styles.commentRow}>
+              <Image
+                source={{ uri: item.image_link || "https://via.placeholder.com/40" }}
+                style={[styles.commentAvatar, item.isSkeleton && { opacity: 0.35, backgroundColor: "#ddd" }]}
+              />
+              <View style={[styles.commentBubble, item.isSkeleton && { backgroundColor: "#E3E3E8" }]}>
+                {!item.isSkeleton && <Text style={styles.commentUsername}>@{item.username}</Text>}
+                {item.isSkeleton ? (
+                  <View style={{ width: 120, height: 12, backgroundColor: "#ccc", borderRadius: 4 }} />
+                ) : (
+                  <Text style={styles.commentText}>{item.comment}</Text>
+                )}
+              </View>
+            </View>
+          )}
+        />
+        <View style={styles.addCommentRow}>
+          <TextInput
+            style={styles.addCommentInput}
+            placeholder="Add a comment..."
+            placeholderTextColor="#999"
+            value={newComment}
+            onChangeText={setNewComment}
+            onSubmitEditing={handleAddComment}
+            returnKeyType="send"
+          />
+          <TouchableOpacity style={styles.addCommentBtn} onPress={handleAddComment} disabled={addCommentMutation.isLoading}>
+            {addCommentMutation.isLoading ? <ActivityIndicator size="small" color="#fff" /> : <Text style={styles.addCommentBtnText}>Send</Text>}
+          </TouchableOpacity>
+        </View>
+      </View>
+    </View>
   );
 }

@@ -1,31 +1,26 @@
-import React from "react";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import React, { useEffect } from "react";
+import { QueryClientProvider, focusManager } from "@tanstack/react-query";
+import queryClient from "./src/hooks/queryClient";
+import { AppState } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
-import ViewPostScreen from "./src/screens/ViewPostScreen"
-// React Query client
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      // Automatically retry failed requests 1 time
-      retry: 1,
-      // Cache data for 1 minute
-      staleTime: 1000 * 60,
-      // Don't refetch on window focus (optional)
-      refetchOnWindowFocus: false,
-    },
-    mutations: {
-      // Retry mutations once
-      retry: 1,
-    },
-  },
-});
+import ViewPostScreen from "./src/screens/ViewPostScreen";
+
 export default function App() {
+  // React Query focus manager
+  useEffect(() => {
+    const sub = AppState.addEventListener("change", (state) => {
+      focusManager.setFocused(state === "active");
+    });
+    return () => sub.remove();
+  }, []);
+
   return (
-<SafeAreaProvider
-  style={{
-    backgroundColor: 'rgba(0, 0, 0, 1)',
-  }}
->      <QueryClientProvider client={queryClient}>
+    <SafeAreaProvider
+      style={{
+        backgroundColor: "rgba(0, 0, 0, 1)",
+      }}
+    >
+      <QueryClientProvider client={queryClient}>
         <ViewPostScreen />
       </QueryClientProvider>
     </SafeAreaProvider>

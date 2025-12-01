@@ -1,121 +1,179 @@
-import { StyleSheet, Dimensions } from "react-native";
-
-const { width } = Dimensions.get("window");
+import { StyleSheet } from "react-native";
 
 const styles = StyleSheet.create({
-SafeArea: {
-flex: 1,
-backgroundColor: "#202221",
-paddingHorizontal: 15,
+container: {
+    flex: 1,
+    paddingTop: 70,
+    backgroundColor: "#F5F5F7",
+    padding: 16,
+  },
+
+  /* ----- Post Card ----- */
+  postCard: {
+    backgroundColor: "#FFF",
+    borderRadius: 18,
+    padding: 16,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: "rgba(0,0,0,0.08)",
+    shadowColor: "#000",
+    shadowOpacity: 0.06,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 4 },
+  },
+
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 10,
+  },
+
+  avatar: {
+    width: 48,
+    height: 48,
+    borderRadius: 50,
+  },
+
+  userInfo: {
+    marginLeft: 10,
+  },
+
+  name: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#111",
+  },
+
+  username: {
+    fontSize: 13,
+    color: "#666",
+  },
+
+  caption: {
+    fontSize: 15,
+    color: "#222",
+    marginBottom: 12,
+    lineHeight: 21,
+  },
+
+  postImage: {
+    width: "100%",
+    height: 300,
+    borderRadius: 14,
+    marginBottom: 12,
+  },
+
+  timestamp: {
+    fontSize: 12,
+    color: "#999",
+    marginBottom: 14,
+  },
+
+  actionRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: "rgba(0,0,0,0.05)",
+  },
+
+  actionText: {
+    fontSize: 16,
+    color: "#333",
+  },
+
+  /* ----- Comments Card ----- */
+  commentsCard: {
+    backgroundColor: "#FFF",
+    borderRadius: 18,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: "rgba(0,0,0,0.08)",
+    height: 250,
+    // Subtle shadow (not too strong)
+    shadowColor: "#000",
+    shadowOpacity: 0.04,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 3 },
+    marginBottom: 60,
+  },
+
+  commentsHeader: {
+    fontSize: 18,
+    fontWeight: "700",
+    marginBottom: 14,
+    color: "#111",
+  },
+
+  commentRow: {
+    flexDirection: "row",
+    marginBottom: 16,
+    alignItems: "flex-start",
+  },
+
+  commentAvatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 40,
+    marginRight: 10,
+  },
+
+  commentBubble: {
+    flex: 1,
+    backgroundColor: "#F2F2F7",
+    borderRadius: 14,
+    padding: 12,
+  },
+
+  commentName: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#111",
+  },
+
+  commentUsername: {
+    fontSize: 12,
+    color: "#666",
+    marginBottom: 4,
+  },
+
+  commentText: {
+    fontSize: 14,
+    color: "#222",
+    lineHeight: 20,
+  },
+
+  addCommentRow: {
+  flexDirection: "row",
+  alignItems: "center",
+  paddingTop: 10,
+  borderTopWidth: 1,
+  borderColor: "#eee",
 },
 
-// Glassy card for posts or comments
-GlassCard: {
-backgroundColor: "rgba(255,255,255,0.1)",
-borderRadius: 25,
-padding: 15,
-marginBottom: 12,
-borderWidth: 1,
-borderColor: "rgba(182,139,75,0.3)",
-shadowColor: "#000",
-shadowOpacity: 0.25,
-shadowRadius: 15,
-shadowOffset: { width: 0, height: 10 },
-backdropFilter: "blur(10px)", // iOS only effect; not all RN supports
+addCommentInput: {
+  flex: 1,
+  backgroundColor: "#f2f2f2",
+  paddingHorizontal: 12,
+  paddingVertical: 10,
+  borderRadius: 20,
+  fontSize: 14,
 },
 
-ContainerRow: {
-flexDirection: "row",
-alignItems: "center",
+addCommentBtn: {
+  marginLeft: 10,
+  backgroundColor: "#1d9bf0", // Twitter blue
+  paddingHorizontal: 15,
+  paddingVertical: 10,
+  borderRadius: 20,
 },
 
-ProfilePicturePost: {
-width: 55,
-height: 55,
-borderRadius: 30,
-backgroundColor: "rgba(200,200,200,0.15)",
-borderWidth: 1,
-borderColor: "rgba(182,139,75,0.5)",
+addCommentBtnText: {
+  color: "#fff",
+  fontWeight: "bold",
+  fontSize: 14,
 },
 
-contentText1: {
-fontSize: 16,
-color: "#B68B4B",
-},
-
-fontWeight700: {
-fontWeight: "700",
-},
-
-primaryColor: {
-color: "#956E2F",
-},
-
-accentColor: {
-color: "#B68B4B",
-},
-
-StatusButton: {
-backgroundColor: "rgba(182,139,75,0.85)",
-paddingVertical: 10,
-paddingHorizontal: 20,
-borderRadius: 30,
-alignItems: "center",
-justifyContent: "center",
-shadowColor: "#B68B4B",
-shadowOpacity: 0.5,
-shadowRadius: 12,
-shadowOffset: { width: 0, height: 6 },
-},
-
-StatusButtonText: {
-color: "#202221",
-fontWeight: "600",
-fontSize: 14,
-},
-
-InputComment: {
-backgroundColor: "rgba(255,255,255,0.15)",
-borderRadius: 20,
-padding: 12,
-color: "#B68B4B",
-fontSize: 14,
-marginBottom: 5,
-shadowColor: "#B68B4B",
-shadowOpacity: 0.2,
-shadowRadius: 8,
-shadowOffset: { width: 0, height: 3 },
-},
-
-PostImage: {
-width: width - 30,
-height: width - 30,
-borderRadius: 25,
-marginBottom: 12,
-borderWidth: 1,
-borderColor: "rgba(182,139,75,0.3)",
-},
-
-CaptionContainer: {
-backgroundColor: "rgba(255,255,255,0.08)",
-padding: 12,
-borderRadius: 20,
-marginBottom: 15,
-shadowColor: "#000",
-shadowOffset: { width: 0, height: 2 },
-shadowOpacity: 0.1,
-shadowRadius: 6,
-},
-
-CaptionText: {
-color: "#B68B4B",
-fontSize: 14,
-},
-
-UsernameText: {
-color: "#956E2F",
-fontWeight: "700",
-},
 });
 
 export default styles;
