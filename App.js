@@ -1,28 +1,26 @@
-import React, { useEffect } from "react";
-import { QueryClientProvider, focusManager } from "@tanstack/react-query";
-import queryClient from "./src/hooks/queryClient";
-import { AppState } from "react-native";
+import React from "react";
+import { View, StyleSheet } from "react-native";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import ViewPostScreen from "./src/screens/ViewPostScreen";
 
-export default function App() {
-  // React Query focus manager
-  useEffect(() => {
-    const sub = AppState.addEventListener("change", (state) => {
-      focusManager.setFocused(state === "active");
-    });
-    return () => sub.remove();
-  }, []);
+const queryClient = new QueryClient();
 
+export default function App() {
   return (
-    <SafeAreaProvider
-      style={{
-        backgroundColor: "rgba(0, 0, 0, 1)",
-      }}
-    >
-      <QueryClientProvider client={queryClient}>
-        <ViewPostScreen />
-      </QueryClientProvider>
+    <SafeAreaProvider>
+      <View style={styles.container}>
+        <QueryClientProvider client={queryClient}>
+          <ViewPostScreen />
+        </QueryClientProvider>
+      </View>
     </SafeAreaProvider>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "#000",
+  },
+});

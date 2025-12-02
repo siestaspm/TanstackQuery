@@ -6,7 +6,7 @@ import { usePost, useComments, useAddComment, useHypePost } from "../hooks/usePo
 import { debounce } from "lodash"; // or implement your own debounce
 
 export default function ViewPostScreen() {
-  const { memberData, setMemberData } = useMemberStore();
+  const { memberData } = useMemberStore();
   const flatListRef = useRef(null);
   const [newComment, setNewComment] = useState("");
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -14,7 +14,7 @@ export default function ViewPostScreen() {
   const lastActionRef = useRef(null);
 
 
-  const { data: post, isLoading: isPostLoading, refetchPost } = usePost(memberData);
+  const { data: post, isLoading: isPostLoading } = usePost(memberData);
   const { hypeMutation, unhypeMutation } = useHypePost(post?.post_id, memberData, "tutywan");
 
   const {
@@ -66,31 +66,15 @@ export default function ViewPostScreen() {
   lastActionRef.current = null; // reset after calling
 }, 500);
 
-  if (!memberData)
-    return (
-      <View style={styles.container}>
-        {" "}
-        <Text style={styles.warningText}>No memberData set</Text>
-        <TouchableOpacity onPress={() => setMemberData("dummy-token")} style={styles.StatusButton}>
-          {" "}
-          <Text style={styles.StatusButtonText}>Set dummy memberData</Text>{" "}
-        </TouchableOpacity>{" "}
-      </View>
-    );
-
   if (isPostLoading)
     return (
       <View style={styles.centeredContainer}>
-        {" "}
-        <ActivityIndicator size="large" />{" "}
+        <ActivityIndicator size="large" />
       </View>
     );
 
     const alreadyHyped = post.hyped_by?.some(h => h.hyped_by_username === "tutywan");
     const hypeCount = post.number_of_hype || 0;
-
-    // If user hasn't hyped yet, subtract 1 from count only for display purposes
-    const displayHypeCount = alreadyHyped ? hypeCount : hypeCount;
     let hypeText = "";
 
     if (alreadyHyped) {
@@ -109,33 +93,26 @@ export default function ViewPostScreen() {
 
   return (
     <View style={styles.container}>
-      {/* Post Card */}{" "}
       <View style={styles.postCard}>
-        {" "}
         <View style={styles.header}>
-          <Image source={{ uri: post?.image_link }} style={styles.avatar} />{" "}
+          <Image source={{ uri: post?.image_link }} style={styles.avatar} />
           <View style={styles.userInfo}>
-            {" "}
-            <Text style={styles.name}>{post?.display_name}</Text> <Text style={styles.username}>@{post?.username}</Text>{" "}
-          </View>{" "}
-        </View>{" "}
+            <Text style={styles.name}>{post?.display_name}</Text> <Text style={styles.username}>@{post?.username}</Text>
+          </View>
+        </View>
         <Text style={styles.caption}>{post?.caption}</Text>
         {post?.picture_1 && <Image source={{ uri: post.picture_1 }} style={styles.postImage} />}
-        {/* Like section */}{" "}
         <View style={styles.likeSection}>
           <TouchableOpacity
             onPress={() => {
-              const alreadyHyped = post.hyped_by?.some(h => h.hyped_by_username === "tutywan");
-              console.log('lastActionRef.current', lastActionRef.current)
               lastActionRef.current = alreadyHyped ? "unhype" : "hype";
               triggerHypeChange();
             }}
           >
             <Text>{alreadyHyped ? "💛" : "🤍"} • {hypeText}</Text>
-          </TouchableOpacity>{" "}
-        </View>{" "}
+          </TouchableOpacity>
+        </View>
       </View>
-      {/* Comments */}
       <View style={styles.commentsCard}>
         <Text style={styles.commentsHeader}>Comments</Text>
         <FlatList

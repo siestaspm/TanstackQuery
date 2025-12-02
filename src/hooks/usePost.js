@@ -10,7 +10,8 @@ export const usePost = (token) => {
     queryKey: ["post"],
     queryFn: () => fetchPost(token),
     enabled: !!token,
-    staleTime: 60_000,
+  staleTime: 24 * 60 * 60 * 1000, // 24 hours
+  cacheTime: 24 * 60 * 60 * 1000,
     refetchInterval: 100_000, // auto refetch every 10 seconds
     refetchOnReconnect: true,
   });
@@ -29,8 +30,8 @@ export const useComments = (post_id, token) => {
     enabled: !!post_id && !!token,
     getNextPageParam: (lastPage) =>
       lastPage.comments.length > 0 ? lastPage.nextCursor : undefined,
-    staleTime: 20_000,
-    cacheTime: 5 * 60_000,
+  staleTime: 24 * 60 * 60 * 1000, // 24 hours
+  cacheTime: 24 * 60 * 60 * 1000,
   });
 };
 
