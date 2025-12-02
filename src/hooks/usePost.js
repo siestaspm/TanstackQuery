@@ -5,15 +5,18 @@ import { getComments } from "../api/getComments";
 import { hypePost } from "../api/hypePost";
 import { UnhypePost } from "../api/UnhypePost";
 
+// ---------------- POST ----------------
 export const usePost = (token) => {
+  const queryClient = useQueryClient();
+
   const query = useQuery({
-    queryKey: ["post"],
+    queryKey: ["post", token],
     queryFn: () => fetchPost(token),
     enabled: !!token,
-  staleTime: 24 * 60 * 60 * 1000, // 24 hours
-  cacheTime: 24 * 60 * 60 * 1000,
-    refetchInterval: 100_000, // auto refetch every 10 seconds
-    refetchOnReconnect: true,
+    staleTime: 24 * 60 * 60 * 1000, // 24h
+    cacheTime: 24 * 60 * 60 * 1000, // persist for 24h
+    refetchOnReconnect: true,       // auto refetch when back online
+    refetchOnWindowFocus: true,
   });
 
   return {
@@ -22,6 +25,7 @@ export const usePost = (token) => {
   };
 };
 
+// ---------------- COMMENTS ----------------
 export const useComments = (post_id, token) => {
   return useInfiniteQuery({
     queryKey: ["comments", post_id, token],
@@ -30,11 +34,12 @@ export const useComments = (post_id, token) => {
     enabled: !!post_id && !!token,
     getNextPageParam: (lastPage) =>
       lastPage.comments.length > 0 ? lastPage.nextCursor : undefined,
-  staleTime: 24 * 60 * 60 * 1000, // 24 hours
-  cacheTime: 24 * 60 * 60 * 1000,
+    staleTime: 24 * 60 * 60 * 1000,
+    cacheTime: 24 * 60 * 60 * 1000,
   });
 };
 
+// ---------------- ADD COMMENT ----------------
 export const useAddComment = (post_id, token) => {
   const queryClient = useQueryClient();
 
@@ -42,6 +47,7 @@ export const useAddComment = (post_id, token) => {
     mutationFn: addCommentRequest,
     onMutate: async ({ comment }) => {
       await queryClient.cancelQueries(["comments", post_id, token]);
+
       const previous = queryClient.getQueryData(["comments", post_id, token]);
 
       const optimisticComment = {
@@ -54,8 +60,11 @@ export const useAddComment = (post_id, token) => {
       };
 
       queryClient.setQueryData(["comments", post_id, token], (old) => {
-        if (!old) return { pages: [{ comments: [optimisticComment], nextCursor: null }], pageParams: [undefined] };
+        if (!old)
+          return { pages: [{ comments: [optimisticComment], nextCursor: null }], pageParams: [undefined] };
+
         const firstPage = old.pages[0] || { comments: [], nextCursor: null };
+
         return {
           ...old,
           pages: [
@@ -72,68 +81,64 @@ export const useAddComment = (post_id, token) => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries(["comments", post_id, token]);
-      queryClient.invalidateQueries(["post"]);
+      queryClient.invalidateQueries(["post", token]);
     },
   });
 };
 
 // ---------------- HYPE / UNHYPE ----------------
-
 export const useHypePost = (post_id, token, username) => {
-const queryClient = useQueryClient();
+  const queryClient = useQueryClient();
 
-const hypeMutation = useMutation({
-mutationFn: hypePost,
-onMutate: async (variables) => {
-  await queryClient.cancelQueries(["post"]);
-  const previous = queryClient.getQueryData(["post"]);
+  const hypeMutation = useMutation({
+    mutationFn: hypePost,
+    onMutate: async () => {
+      await queryClient.cancelQueries(["post", token]);
+      const previous = queryClient.getQueryData(["post", token]);
 
-  queryClient.setQueryData(["post"], (old) => ({
-    ...old,
-    number_of_hype: (old?.number_of_hype || 0) + 1, // increment
-    hyped_by: [...(old?.hyped_by || []), { hype_post_id: `temp-${Date.now()}`, hyped_by_username: username }],
-  }));
+      queryClient.setQueryData(["post", token], (old) => ({
+        ...old,
+        number_of_hype: (old?.number_of_hype || 0) + 1,
+        hyped_by: [...(old?.hyped_by || []), { hype_post_id: `temp-${Date.now()}`, hyped_by_username: username }],
+      }));
 
-  return { previous };
-},
-onError: (_, __, context) => {
-  if (context?.previous) queryClient.setQueryData(["post"], context.previous);
-},
-onSuccess: (data) => {
-  queryClient.setQueryData(["post"], (old) => ({
-    ...old,
-    hyped_by: [
-      ...old.hyped_by.filter((h) => !h.hype_post_id.toString().startsWith("temp")),
-      ...data,
-    ],
-  }));
-},
+      return { previous };
+    },
+    onError: (_, __, context) => {
+      if (context?.previous) queryClient.setQueryData(["post", token], context.previous);
+    },
+    onSuccess: (data) => {
+      queryClient.setQueryData(["post", token], (old) => ({
+        ...old,
+        hyped_by: [
+          ...old.hyped_by.filter((h) => !h.hype_post_id.toString().startsWith("temp")),
+          ...data,
+        ],
+      }));
+    },
+  });
 
-});
+  const unhypeMutation = useMutation({
+    mutationFn: UnhypePost,
+    onMutate: async () => {
+      await queryClient.cancelQueries(["post", token]);
+      const previous = queryClient.getQueryData(["post", token]);
 
-const unhypeMutation = useMutation({
-mutationFn: UnhypePost,
-onMutate: async () => {
-  await queryClient.cancelQueries(["post"]);
-  const previous = queryClient.getQueryData(["post"]);
+      queryClient.setQueryData(["post", token], (old) => ({
+        ...old,
+        number_of_hype: Math.max((old?.number_of_hype || 1) - 1, 0),
+        hyped_by: (old?.hyped_by || []).filter((h) => h.hyped_by_username !== username),
+      }));
 
-  queryClient.setQueryData(["post"], (old) => ({
-    ...old,
-    number_of_hype: Math.max((old?.number_of_hype || 1) - 1, 0), // decrement
-    hyped_by: (old?.hyped_by || []).filter((h) => h.hyped_by_username !== username),
-  }));
+      return { previous };
+    },
+    onError: (_, __, context) => {
+      if (context?.previous) queryClient.setQueryData(["post", token], context.previous);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(["post", token]);
+    },
+  });
 
-  return { previous };
-},
-onError: (_, __, context) => {
-  if (context?.previous) queryClient.setQueryData(["post"], context.previous);
-},
-onSuccess: () => {
-  queryClient.invalidateQueries(["post"]);
-},
-
-
-});
-
-return { hypeMutation, unhypeMutation };
+  return { hypeMutation, unhypeMutation };
 };
