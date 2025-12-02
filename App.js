@@ -4,7 +4,7 @@ import { QueryClient, QueryClientProvider, focusManager } from '@tanstack/react-
 import { persistQueryClient } from '@tanstack/react-query-persist-client';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
-import { persister } from './src/hooks/queryPersistor';
+import { persister } from './src/hooks/cache/queryPersistor';
 
 import ViewPostScreen from './src/screens/ViewPostScreen';
 import CreatePostScreen from './src/screens/CreatePostScreen'

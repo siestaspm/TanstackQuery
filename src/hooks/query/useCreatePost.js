@@ -1,7 +1,7 @@
 import { useMutation } from "@tanstack/react-query";
-import { createPost } from "../api/createPost";
-import { handleUploadImages } from "../api/directUpload";
-import { usePostStore } from "../store/usePostStore";
+import { createPost } from "../../api/createPost";
+import { handleUploadImages } from "../../api/directUpload";
+import { usePostStore } from "../../store/usePostStore";
 
 export const useCreatePost = () => {
   const addPost = usePostStore((state) => state.addPost);

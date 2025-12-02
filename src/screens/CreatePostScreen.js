@@ -3,7 +3,7 @@ import { View, TextInput, Text, TouchableOpacity, Image, ScrollView } from "reac
 import * as ImagePicker from "react-native-image-picker";
 import NetInfo from "@react-native-community/netinfo";
 import styles from "../styles/mainStyle";
-import { useCreatePost } from "../hooks/useCreatePost";
+import { useCreatePost } from "../hooks/query/useCreatePost";
 import { useMemberStore } from "../store/useMemberStore";
 import { usePostStore } from "../store/usePostStore";
 import { normalizeImagePath } from '../utils/normalizedImagePath';

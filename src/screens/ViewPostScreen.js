@@ -2,7 +2,7 @@ import React, { useRef, useState } from "react";
 import { View, Text, FlatList, Image, TextInput, TouchableOpacity, ActivityIndicator, RefreshControl, Keyboard } from "react-native";
 import styles from "../styles/mainStyle";
 import { useMemberStore } from "../store/useMemberStore";
-import { usePost, useComments, useAddComment, useHypePost } from "../hooks/usePost";
+import { usePost, useComments, useAddComment, useHypePost } from "../hooks/query/usePost";
 import { debounce } from "lodash"; // or implement your own debounce
 
 export default function ViewPostScreen() {

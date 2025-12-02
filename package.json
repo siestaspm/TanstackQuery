@@ -5,6 +5,14 @@
   "scripts": {
     "android": "react-native run-android",
     "ios": "react-native run-ios",
+    "android:dev:debug": "npm run kill-metro && watchman watch-del-all && cross-env ENVFILE=.env.development react-native run-android --mode=debug",
+    "android:prod:debug": "npm run kill-metro && watchman watch-del-all && cross-env ENVFILE=.env.production react-native run-android --mode=debug",
+    "android:dev:release": "npm run kill-metro && watchman watch-del-all && cd android && ENVFILE=.env.development ./gradlew :app:assembleRelease",
+    "android:prod:release": "npm run kill-metro && watchman watch-del-all && cd android && ENVFILE=.env.production ./gradlew :app:assembleRelease",
+    "ios:dev:debug": "cross-env ENVFILE=.env.development react-native run-ios --mode Debug",
+    "ios:prod:debug": "cross-env ENVFILE=.env.production react-native run-ios --mode Debug",
+    "ios:dev:release": "cross-env ENVFILE=.env.development react-native run-ios --mode Release",
+    "ios:prod:release": "cross-env ENVFILE=.env.production react-native run-ios --mode Release",
     "lint": "eslint .",
     "start": "react-native start",
     "test": "jest"
@@ -19,6 +27,7 @@
     "lodash": "^4.17.21",
     "react": "19.1.1",
     "react-native": "0.82.1",
+    "react-native-config": "^1.6.1",
     "react-native-fs": "^2.20.0",
     "react-native-image-crop-picker": "^0.51.1",
     "react-native-image-picker": "^8.2.1",

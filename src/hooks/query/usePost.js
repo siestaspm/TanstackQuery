@@ -1,9 +1,9 @@
 import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { fetchPost } from "../api/fetchPost";
-import { addCommentRequest } from "../api/addCommentRequest";
-import { getComments } from "../api/getComments";
-import { hypePost } from "../api/hypePost";
-import { UnhypePost } from "../api/UnhypePost";
+import { fetchPost } from "../../api/fetchPost";
+import { addCommentRequest } from "../../api/addCommentRequest";
+import { getComments } from "../../api/getComments";
+import { hypePost } from "../../api/hypePost";
+import { UnhypePost } from "../../api/UnhypePost";
 
 // ---------------- POST ----------------
 export const usePost = (token) => {
