@@ -7,7 +7,6 @@ import { useCreatePost } from "../hooks/useCreatePost";
 import { useMemberStore } from "../store/useMemberStore";
 import { usePostStore } from "../store/usePostStore";
 import { normalizeImagePath } from '../utils/normalizedImagePath';
-import ImageCropPicker from "react-native-image-crop-picker";
 export default function CreatePostScreen() {
   const [caption, setCaption] = useState("");
   const [images, setImages] = useState([]);
@@ -16,27 +15,29 @@ export default function CreatePostScreen() {
   const uploadQueue = usePostStore((state) => state.uploadQueue);
   const retryPending = usePostStore((state) => state.retryPending);
 
+  // Retry failed posts on reconnect
   useEffect(() => {
     const unsubscribe = NetInfo.addEventListener((state) => {
       if (state.isConnected) retryPending();
+      console.log('HIII')
     });
     return () => unsubscribe();
-  }, []);
+  }, [retryPending]);
 
 
-  const pickImage = () => {
-    ImageCropPicker.openCamera({
-      width: 2000,
-      height: 2000,
-      cropping: true,
-      compressImageMaxWidth: 2000, 
-      compressImageMaxHeight: 2000, 
-    }).then(image => {
-      setImages(image.path);
-    }).catch(error => {
-      console.log(error);
-    });
-  };
+    const pickImage = async () => {
+    ImagePicker.launchImageLibrary(
+        { mediaType: "photo", quality: 0.8 },
+        async (response) => {
+        if (!response.didCancel && !response.errorCode) {
+            console.log("aa",response.assets)
+            const normalizedUri = await normalizeImagePath(response.assets[0].uri);
+            console.log("Normalized image path:", normalizedUri);
+            setImages([...images, { uri: response.assets?.[0].uri }]);
+        }
+        }
+    );
+    };
 
   const submitPost = () => {
     mutation.mutate({ caption, username: 'tutywan', images, token: memberData });
@@ -56,7 +57,7 @@ export default function CreatePostScreen() {
         />
 
         {images.map((img, i) => (
-          <Image key={i} source={{ uri: img }} style={styles.postImage} />
+          <Image key={i} source={{ uri: img.uri }} style={styles.postImage} />
         ))}
 
         <View style={{ flexDirection: "row", justifyContent: "space-between", marginTop: 10 }}>

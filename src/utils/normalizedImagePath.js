@@ -4,7 +4,7 @@ export const normalizeImagePath = async (uri) => {
   try {
     if (!uri.startsWith("file://")) return uri;
 
-    const tmpDir = `${RNFS.TemporaryDirectoryPath}/ReactNative`;
+    const tmpDir = `${RNFS.TemporaryDirectoryPath}ReactNative`;
     await RNFS.mkdir(tmpDir); // make sure folder exists
 
     const destPath = `${tmpDir}/${Date.now()}.jpg`;
