@@ -1,6 +1,12 @@
 # OSX
 #
 .DS_Store
+.env.production
+.env.development
+.env
+.env.local
+.env.staging
+.env.*.local
 
 # Xcode
 #
