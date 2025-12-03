@@ -4,6 +4,8 @@ import styles from "../styles/mainStyle";
 import { useMemberStore } from "../store/useMemberStore";
 import { usePost, useComments, useAddComment, useHypePost } from "../hooks/query/usePost";
 import { debounce } from "lodash"; // or implement your own debounce
+import { FasterImageView } from '@rraut/react-native-faster-image';
+
 
 import { useThemeStore } from '../store/useThemeStore';
 import {lightColors, darkColors} from '../styles/theme/colors';
@@ -107,13 +109,13 @@ export default function ViewPostScreen() {
     <ScrollView style={styles.container}>
       <View style={styles.postCard}>
         <View style={styles.header}>
-          <Image source={{ uri: post?.image_link }} style={styles.avatar} />
+          <FasterImageView source={{ uri: post?.image_link }} style={styles.avatar} />
           <View style={styles.userInfo}>
             <Text style={styles.name}>{post?.display_name}</Text> <Text style={styles.username}>@{post?.username}</Text>
           </View>
         </View>
         <Text style={styles.caption}>{post?.caption}</Text>
-        {post?.picture_1 && <Image source={{ uri: post.picture_1 }} style={styles.postImage} />}
+        {post?.picture_1 && <FasterImageView source={{ uri: post.picture_1 }} style={styles.postImage} />}
         <View style={styles.likeSection}>
           <TouchableOpacity
             onPress={() => {
@@ -140,7 +142,7 @@ export default function ViewPostScreen() {
           contentContainerStyle={{ paddingBottom: 10 }}
           renderItem={({ item }) => (
             <View style={styles.commentRow}>
-              <Image
+              <FasterImageView
                 source={{ uri: item.image_link || "https://via.placeholder.com/40" }}
                 style={[styles.commentAvatar, item.isSkeleton && { opacity: 0.35, backgroundColor: "#ddd" }]}
               />
