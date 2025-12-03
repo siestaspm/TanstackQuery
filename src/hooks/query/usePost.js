@@ -1,24 +1,53 @@
-import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useInfiniteQuery, useMutation } from "@tanstack/react-query";
 import { fetchPost } from "../../api/fetchPost";
 import { addCommentRequest } from "../../api/addCommentRequest";
 import { getComments } from "../../api/getComments";
 import { hypePost } from "../../api/hypePost";
 import { UnhypePost } from "../../api/UnhypePost";
-
+import { queryClient } from "./queryClient";
 // ---------------- POST ----------------
 export const usePost = (token) => {
-  const queryClient = useQueryClient();
-
   const query = useQuery({
     queryKey: ["post", token],
-    queryFn: () => fetchPost(token),
+    
+    // --- 1. The Query Function (What actually happens on the network) ---
+    queryFn: async () => {
+      console.log(`[QueryFn: posts] Starting fetch for token: ${token}`);
+      try {
+        const result = await fetchPost(token);
+        console.log(`[QueryFn: posts] Successfully fetched data for token: ${token}.`);
+        return result;
+      } catch (error) {
+        console.error(`[QueryFn: posts] FAILED to fetch data for token: ${token}`, error);
+        throw error; // Essential: Re-throw to be caught by React Query
+      }
+    },
+    
+    // --- 2. Configuration Options Logging ---
     enabled: !!token,
-    staleTime: 24 * 60 * 60 * 1000, // 24h
-    cacheTime: 24 * 60 * 60 * 1000, // persist for 24h
-    refetchOnReconnect: true,       // auto refetch when back online
+    staleTime: 24 * 60 * 60 * 1000, 
+    cacheTime: 24 * 60 * 60 * 1000, 
+    refetchOnReconnect: true,
     refetchOnWindowFocus: true,
+
+    // --- 3. Lifecycle Logging (React Query Cache Events) ---
+    onSuccess: (data) => {
+      console.log(`[Success] Data for posts/${token} received and saved to cache.`);
+      // Optional: Check the cache manually
+      const cachedData = queryClient.getQueryData(["post", token]);
+      console.log(`[Cache Check] Data is now in cache.`, cachedData);
+    },
+    onError: (error) => {
+      console.error(`[Error] Query failed, will use existing stale data (if available).`, error);
+    },
+    onSettled: (data, error) => {
+      console.log(`[Settled] Query attempt finished. Status: ${error ? 'Failed' : 'Success'}.`);
+    }
   });
 
+  // --- 4. Component Render Logging ---
+  console.log(`[Render] Component rendering. Query state: loading=${query.isLoading}, error=${query.isError}, stale=${query.isStale}`);
+  
   return {
     ...query,
     refetchPost: query.refetch,
@@ -41,7 +70,6 @@ export const useComments = (post_id, token) => {
 
 // ---------------- ADD COMMENT ----------------
 export const useAddComment = (post_id, token) => {
-  const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: addCommentRequest,
@@ -88,7 +116,6 @@ export const useAddComment = (post_id, token) => {
 
 // ---------------- HYPE / UNHYPE ----------------
 export const useHypePost = (post_id, token, username) => {
-  const queryClient = useQueryClient();
 
   const hypeMutation = useMutation({
     mutationFn: hypePost,

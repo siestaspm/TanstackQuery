@@ -1,6 +1,5 @@
 import React, { useRef, useState } from "react";
-import { View, Text, FlatList, Image, TextInput, TouchableOpacity, ActivityIndicator, RefreshControl, Keyboard, ScrollView } from "react-native";
-import styles from "../styles/mainStyle";
+import { View, Text, FlatList, TextInput, TouchableOpacity, ActivityIndicator, RefreshControl, Keyboard, ScrollView } from "react-native";
 import { useMemberStore } from "../store/useMemberStore";
 import { usePost, useComments, useAddComment, useHypePost } from "../hooks/query/usePost";
 import { debounce } from "lodash"; // or implement your own debounce
@@ -27,7 +26,7 @@ export default function ViewPostScreen() {
   const lastActionRef = useRef(null);
 
 
-  const { data: post, isLoading: isPostLoading, refetchPost } = usePost(memberData);
+  const { data: post, isLoading: isPostLoading } = usePost(memberData);
   const { hypeMutation, unhypeMutation } = useHypePost(post?.post_id, memberData, "tutywan");
 
   const {
@@ -88,7 +87,7 @@ export default function ViewPostScreen() {
 
     const alreadyHyped = post.hyped_by?.some(h => h.hyped_by_username === "tutywan");
     const hypeCount = post.number_of_hype || 0;
-    let hypeText = "";
+    let hypeText = "Hype";
 
     if (alreadyHyped) {
     if (hypeCount === 1) { 
@@ -106,12 +105,13 @@ export default function ViewPostScreen() {
 
 
   return (
-    <ScrollView style={styles.container}>
+    <View style={styles.container}>
       <View style={styles.postCard}>
         <View style={styles.header}>
-          <FasterImageView source={{ uri: post?.image_link }} style={styles.avatar} />
+          <FasterImageView source={{ uri: post?.image_link ? post?.image_link : null }} style={styles.avatar}/>
           <View style={styles.userInfo}>
-            <Text style={styles.name}>{post?.display_name}</Text> <Text style={styles.username}>@{post?.username}</Text>
+            <Text style={styles.name}>{post?.display_name}</Text>
+            <Text style={styles.username}>@{post?.username}</Text>
           </View>
         </View>
         <Text style={styles.caption}>{post?.caption}</Text>
@@ -172,6 +172,6 @@ export default function ViewPostScreen() {
           </TouchableOpacity>
         </View>
       </View>
-    </ScrollView>
+    </View>
   );
 }
