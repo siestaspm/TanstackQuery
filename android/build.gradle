@@ -19,3 +19,10 @@ buildscript {
 }
 
 apply plugin: "com.facebook.react.rootproject"
+
+project.ext.envConfigFiles = [
+    devDebug : ".env.development",
+    devRelease : ".env.development",
+    prodDebug : ".env.production",
+    prodRelease : ".env.production"
+]

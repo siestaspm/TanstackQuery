@@ -1,7 +1,7 @@
 import axios from "axios";
 import {Config} from "react-native-config";
 export const hypePost = async ({ token, username, post_id }) => {
-const endpoint = `${Config.API_BASE_URL}/xdeal/Hype`
+const endpoint = `${Config.SL_API_BASE_URL}/xdeal/Hype`
 const parameter =  {
       token,
       username,

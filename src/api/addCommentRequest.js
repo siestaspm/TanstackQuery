@@ -2,7 +2,7 @@ import axios from "axios";
 import {Config} from 'react-native-config'
 
 export const addCommentRequest = async ({ token, comment, username, post_id }) => {
-  const endpoint = `${Config.API_BASE_URL}/xdeal/AddComment`
+  const endpoint = `${Config.SL_API_BASE_URL}/xdeal/AddComment`
 const parameter =  {
       token,
       username,

@@ -30,7 +30,7 @@ export const handleUploadImages = async (images, type) => {
 
 export const GetPreSignedUrl = async (type, content_type) => {
     try {
-        const endpoint = `${Config.API_BASE_URL}/xdeal/GetPreSignedUrl`
+        const endpoint = `${Config.SL_API_BASE_URL}/xdeal/GetPreSignedUrl`
             const parameter = {
             type: type,
             content_type: content_type,
