@@ -1,97 +1,167 @@
-This is a new [**React Native**](https://reactnative.dev) project, bootstrapped using [`@react-native-community/cli`](https://github.com/react-native-community/cli).
+# TanStack Query
 
-# Getting Started
+A React Native project using TanStack Query, Zustand, MMKV Storage, and Environment Variables — providing a clean, powerful architecture for server-state management, global UI/local state, persistent storage, and configurable environments.
 
 > **Note**: Make sure you have completed the [Set Up Your Environment](https://reactnative.dev/docs/set-up-your-environment) guide before proceeding.
 
-## Step 1: Start Metro
+## 📦 What’s Inside / Why This Stack
 
-First, you will need to run **Metro**, the JavaScript build tool for React Native.
+### 🟩 TanStack Query — Server-State Management
 
-To start the Metro dev server, run the following command from the root of your React Native project:
+• Fetching, caching, and synchronizing API data
 
-```sh
-# Using npm
-npm start
+• Background updates, retry logic, stale time control
 
-# OR using Yarn
-yarn start
+• Handles focus events, app state changes, and offline mode
+
+• Perfect for async remote data
+    👉 https://tanstack.com
+
+### 🟦 Zustand — Local / UI State
+
+• Lightweight global state (theme, toggles, filters, UI flags, etc.)
+• Avoids using server-state for UI logic
+• No boilerplate compared to Redux
+    👉 https://github.com/pmndrs/zustand
+
+### 🟨 MMKV — High-performance Persistent Storage
+
+• Very fast (written in C++)
+• Ideal for caching + persisting local data
+• Used for persisting TanStack Query Cache + Zustand state
+    👉 https://github.com/mrousavy/react-native-mmkv
+
+### 🟪 Environment Variables (.env)
+
+• Configure API URLs, keys, and environment-dependent configuration
+• Clean Dev/Prod switching without hardcoding values
+• Supports .env.development, .env.production, and custom ENVFILE
+
+### 🎯 Benefits of This Architecture
+
+• Clean separation of server-state vs local UI state
+• Persistent offline-first caching using TanStack Query + MMKV
+• Global state done simply with Zustand
+• Dynamic environment configuration using .env
+
+## ✅ Features
+
+### Server Data 
+
+• Fetch & cache API responses
+• Stale-time control
+• Automatic refetching
+• Retry & error handling
+• Background refresh
+
+### Offline-First Support
+
+• Cached data persists across restarts
+• Uses MMKV + TanStack Query Persister
+
+### Local State
+• UI state & preferences using Zustand
+
+### Environment Config
+• .env.development
+• .env.production
+• Easily switches using ENVFILE
+
+## 🔶 1. Setup TanStack Query
+ In App.tsx:
+
+```
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 5, 
+      retry: 3,
+    },
+  },
+});
+
+export default function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      {/* rest of your app */}
+    </QueryClientProvider>
+  );
+}
 ```
 
-## Step 2: Build and run your app
+Using a Query
 
-With Metro running, open a new terminal window/pane from the root of your React Native project, and use one of the following commands to build and run your Android or iOS app:
+```
+import { MMKV } from 'react-native-mmkv';
+import { createSyncStoragePersister } from '@tanstack/query-sync-storage-persister';
 
-### Android
+const storage = new MMKV();
 
-```sh
-# Using npm
-npm run android
-
-# OR using Yarn
-yarn android
+const persister = createSyncStoragePersister({
+  storage: {
+    setItem: (key, value) => storage.set(key, value),
+    getItem: (key) => storage.getString(key) ?? null,
+    removeItem: (key) => storage.delete(key),
+  },
+});
 ```
 
-### iOS
+Wrap your app:
 
-For iOS, remember to install CocoaPods dependencies (this only needs to be run on first clone or after updating native deps).
+```
+import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
 
-The first time you create a new project, run the Ruby bundler to install CocoaPods itself:
-
-```sh
-bundle install
+<PersistQueryClientProvider client={queryClient} persistOptions={{ persister }}>
+  <App />
+</PersistQueryClientProvider>
 ```
 
-Then, and every time you update your native dependencies, run:
+## 🔶 3. Zustand for Client / UI State
 
-```sh
-bundle exec pod install
+```
+import { create } from 'zustand';
+
+export const useStore = create((set) => ({
+  theme: 'light',
+  toggleTheme: () => set(s => ({
+    theme: s.theme === 'light' ? 'dark' : 'light'
+  })),
+}));
 ```
 
-For more information, please visit [CocoaPods Getting Started guide](https://guides.cocoapods.org/using/getting-started.html).
+Usage in components:
 
-```sh
-# Using npm
-npm run ios
-
-# OR using Yarn
-yarn ios
+```
+const theme = useStore((state) => state.theme);
 ```
 
-If everything is set up correctly, you should see your new app running in the Android Emulator, iOS Simulator, or your connected device.
+## 🔶 3. Zustand for Client / UI State
 
-This is one way to run your app — you can also build it directly from Android Studio or Xcode.
+Example .env.development:
 
-## Step 3: Modify your app
+```
+API_BASE_URL=https://dev.api.yoursite.com
+```
 
-Now that you have successfully run the app, let's make changes!
+Example usage (depending on your setup):
 
-Open `App.tsx` in your text editor of choice and make some changes. When you save, your app will automatically update and reflect these changes — this is powered by [Fast Refresh](https://reactnative.dev/docs/fast-refresh).
+```
+import { API_BASE_URL } from '@env';
 
-When you want to forcefully reload, for example to reset the state of your app, you can perform a full reload:
+fetch(`${API_BASE_URL}/posts`);
+```
 
-- **Android**: Press the <kbd>R</kbd> key twice or select **"Reload"** from the **Dev Menu**, accessed via <kbd>Ctrl</kbd> + <kbd>M</kbd> (Windows/Linux) or <kbd>Cmd ⌘</kbd> + <kbd>M</kbd> (macOS).
-- **iOS**: Press <kbd>R</kbd> in iOS Simulator.
+### 🧩 When to Use What
 
-## Congratulations! :tada:
+Use Case                                    | Tool
+------------------------------------------- | -------------
+Remote API data, caching, refetching        | TanStack Query
+UI state, selectors, toggles                | Zustand
+Persist storage, offline cache              | MMKV
+Environment config                          | .env
 
-You've successfully run and modified your React Native App. :partying_face:
 
-### Now what?
 
-- If you want to add this new React Native code to an existing application, check out the [Integration guide](https://reactnative.dev/docs/integration-with-existing-apps).
-- If you're curious to learn more about React Native, check out the [docs](https://reactnative.dev/docs/getting-started).
 
-# Troubleshooting
-
-If you're having issues getting the above steps to work, see the [Troubleshooting](https://reactnative.dev/docs/troubleshooting) page.
-
-# Learn More
-
-To learn more about React Native, take a look at the following resources:
-
-- [React Native Website](https://reactnative.dev) - learn more about React Native.
-- [Getting Started](https://reactnative.dev/docs/environment-setup) - an **overview** of React Native and how setup your environment.
-- [Learn the Basics](https://reactnative.dev/docs/getting-started) - a **guided tour** of the React Native **basics**.
-- [Blog](https://reactnative.dev/blog) - read the latest official React Native **Blog** posts.
-- [`@facebook/react-native`](https://github.com/facebook/react-native) - the Open Source; GitHub **repository** for React Native.
