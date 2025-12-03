@@ -7,6 +7,10 @@ import { useCreatePost } from "../hooks/query/useCreatePost";
 import { useMemberStore } from "../store/useMemberStore";
 import { usePostStore } from "../store/usePostStore";
 import { normalizeImagePath } from '../utils/normalizedImagePath';
+import { useThemeStore } from "../store/useThemeStore";
+import { lightColors } from "../styles/theme/colors";
+import { darkColors } from "../styles/theme/colors";
+import { mainStyles } from "../styles/mainStyle";
 export default function CreatePostScreen() {
   const [caption, setCaption] = useState("");
   const [images, setImages] = useState([]);
@@ -14,6 +18,11 @@ export default function CreatePostScreen() {
   const mutation = useCreatePost();
   const uploadQueue = usePostStore((state) => state.uploadQueue);
   const retryPending = usePostStore((state) => state.retryPending);
+
+      const { mode } = useThemeStore();
+    const colors = mode === "light" ? lightColors : darkColors;
+  
+    const styles = mainStyles(colors)
 
   // Retry failed posts on reconnect
   useEffect(() => {

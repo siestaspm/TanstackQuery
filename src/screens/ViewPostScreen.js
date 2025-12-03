@@ -1,12 +1,23 @@
 import React, { useRef, useState } from "react";
-import { View, Text, FlatList, Image, TextInput, TouchableOpacity, ActivityIndicator, RefreshControl, Keyboard } from "react-native";
+import { View, Text, FlatList, Image, TextInput, TouchableOpacity, ActivityIndicator, RefreshControl, Keyboard, ScrollView } from "react-native";
 import styles from "../styles/mainStyle";
 import { useMemberStore } from "../store/useMemberStore";
 import { usePost, useComments, useAddComment, useHypePost } from "../hooks/query/usePost";
 import { debounce } from "lodash"; // or implement your own debounce
 
+import { useThemeStore } from '../store/useThemeStore';
+import {lightColors, darkColors} from '../styles/theme/colors';
+import { mainStyles } from "../styles/mainStyle";
 export default function ViewPostScreen() {
+  // dark mode ligth mode
+    const { mode } = useThemeStore();
+  const colors = mode === "light" ? lightColors : darkColors;
+
+  const styles = mainStyles(colors)
+
+
   const { memberData } = useMemberStore();
+
   const flatListRef = useRef(null);
   const [newComment, setNewComment] = useState("");
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -14,7 +25,7 @@ export default function ViewPostScreen() {
   const lastActionRef = useRef(null);
 
 
-  const { data: post, isLoading: isPostLoading } = usePost(memberData);
+  const { data: post, isLoading: isPostLoading, refetchPost } = usePost(memberData);
   const { hypeMutation, unhypeMutation } = useHypePost(post?.post_id, memberData, "tutywan");
 
   const {
@@ -83,6 +94,7 @@ export default function ViewPostScreen() {
       hypeText = "Hyped by you";
     } 
     else { 
+
       hypeText = `Hyped by you, ${hypeCount - 1} other${hypeCount - 1 > 1 ? "s" : ""}`;
     }
     } else {
@@ -92,7 +104,7 @@ export default function ViewPostScreen() {
 
 
   return (
-    <View style={styles.container}>
+    <ScrollView style={styles.container}>
       <View style={styles.postCard}>
         <View style={styles.header}>
           <Image source={{ uri: post?.image_link }} style={styles.avatar} />
@@ -158,6 +170,6 @@ export default function ViewPostScreen() {
           </TouchableOpacity>
         </View>
       </View>
-    </View>
+    </ScrollView>
   );
 }
