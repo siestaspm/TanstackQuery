@@ -5,6 +5,7 @@ import { usePost, useComments, useAddComment, useHypePost } from "../hooks/query
 import { debounce } from "lodash"; // or implement your own debounce
 import { FasterImageView } from '@rraut/react-native-faster-image';
 
+import { queryClient } from "../hooks/query/queryClient";
 
 import { useThemeStore } from '../store/useThemeStore';
 import {lightColors, darkColors} from '../styles/theme/colors';
@@ -78,6 +79,11 @@ export default function ViewPostScreen() {
   lastActionRef.current = null; // reset after calling
 }, 500);
 
+const clearReactQueryCache = () => {
+    queryClient.clear(); // ← wipes ALL cached queries AND mutations!
+    console.log("React Query cache cleared.");
+  };
+
   if (isPostLoading)
     return (
       <View style={styles.centeredContainer}>
@@ -113,6 +119,12 @@ export default function ViewPostScreen() {
             <Text style={styles.name}>{post?.display_name}</Text>
             <Text style={styles.username}>@{post?.username}</Text>
           </View>
+          <TouchableOpacity
+            onPress={clearReactQueryCache}>
+              <Text>
+                CLEAR CACHE
+              </Text>
+            </TouchableOpacity>
         </View>
         <Text style={styles.caption}>{post?.caption}</Text>
         {post?.picture_1 && <FasterImageView source={{ uri: post.picture_1 }} style={styles.postImage} />}
